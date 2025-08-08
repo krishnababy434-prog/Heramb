@@ -14,6 +14,9 @@ module.exports = (sequelize, DataTypes) => {
     tax: { type: DataTypes.DECIMAL(10,2), allowNull: false },
     total: { type: DataTypes.DECIMAL(10,2), allowNull: false },
     created_by: { type: DataTypes.INTEGER, allowNull: false },
+    status: { type: DataTypes.ENUM('draft','submitted','cancelled'), allowNull: false, defaultValue: 'draft' },
+    discount: { type: DataTypes.DECIMAL(10,2), allowNull: false, defaultValue: 0 },
+    coupon_code: { type: DataTypes.STRING, allowNull: true },
   }, {
     sequelize,
     modelName: 'Order',

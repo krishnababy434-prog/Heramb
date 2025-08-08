@@ -20,6 +20,7 @@ module.exports = async function createApp() {
   app.use('/api/orders', require('./routes/orders'));
   app.use('/api/expenses', require('./routes/expenses'));
   app.use('/api/inventory', require('./routes/inventory'));
+  app.use('/api/coupons', require('./routes/coupons'));
 
   app.use((err, req, res, next) => {
     console.error(err);

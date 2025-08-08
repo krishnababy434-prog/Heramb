@@ -11,6 +11,7 @@ export default function Orders() {
   const [customer_name, setCustomer] = useState('Walk-in')
   const [mobile, setMobile] = useState('')
   const [items, setItems] = useState([])
+  const [coupon_code, setCoupon] = useState('')
 
   const addItem = (type, id, name, price) => {
     setItems(prev => [...prev, { menu_id: type==='menu' ? id : undefined, combo_id: type==='combo' ? id : undefined, quantity: 1, unit_price: price, name }])
@@ -18,9 +19,10 @@ export default function Orders() {
   const updateQty = (idx, q) => setItems(prev => prev.map((it,i)=> i===idx ? { ...it, quantity: q } : it))
   const removeItem = (idx) => setItems(prev => prev.filter((_,i)=>i!==idx))
   const subtotal = items.reduce((s,it)=> s + Number(it.unit_price)*Number(it.quantity), 0)
+  const discount = 0 // client-side preview left 0; server computes real discount
 
   const create = useMutation({
-    mutationFn: async () => (await api.post('/orders', { customer_name, mobile, items })).data,
+    mutationFn: async () => (await api.post('/orders', { customer_name, mobile, items, coupon_code })).data,
     onSuccess: () => { setItems([]); qc.invalidateQueries({ queryKey: ['orders'] }) }
   })
 
@@ -63,6 +65,9 @@ export default function Orders() {
             </tbody>
           </table>
           <div className="text-right font-semibold">Subtotal: ₹ {subtotal.toFixed(2)}</div>
+          <div className="flex gap-2 justify-end">
+            <input className="border rounded p-2" placeholder="Coupon code" value={coupon_code} onChange={e=>setCoupon(e.target.value)} />
+          </div>
           <button onClick={()=>create.mutate()} className="bg-green-600 text-white px-4 py-2 rounded">Create Order</button>
         </div>
       </div>

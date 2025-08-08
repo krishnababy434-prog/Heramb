@@ -34,6 +34,7 @@ app.use('/api/orders', require('../src/routes/orders'));
 app.use('/api/expenses', require('../src/routes/expenses'));
 app.use('/api/inventory', require('../src/routes/inventory'));
 app.use('/api/uploads', require('../src/routes/uploads'));
+app.use('/api/coupons', require('../src/routes/coupons'));
 
 // Error handler
 app.use((err, req, res, next) => {
