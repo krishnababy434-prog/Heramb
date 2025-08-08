@@ -1,13 +1,13 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const { Order, OrderItem, Menu, ComboMenu, User } = require('../../models');
-const { authenticate, isEmployeeOrAdmin } = require('../middleware/auth');
+const { authenticate, authorizeRoles } = require('../middleware/auth');
 
 const router = express.Router();
 
 const TAX_RATE = parseFloat(process.env.TAX_RATE || '0.0');
 
-router.post('/', authenticate, isEmployeeOrAdmin,
+router.post('/', authenticate, authorizeRoles('seller','admin'),
   body('customer_name').notEmpty(),
   body('items').isArray({ min: 1 }),
   async (req, res) => {
@@ -47,7 +47,7 @@ router.post('/', authenticate, isEmployeeOrAdmin,
   }
 );
 
-router.get('/', authenticate, isEmployeeOrAdmin, async (req, res) => {
+router.get('/', authenticate, authorizeRoles('seller','manager','admin'), async (req, res) => {
   const { from, to, employee_id, mobile, limit = 20, offset = 0 } = req.query;
   const where = {};
   if (mobile) where.mobile = mobile;

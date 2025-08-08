@@ -7,7 +7,7 @@ const router = express.Router();
 router.use(authenticate, isAdmin);
 
 router.get('/employees', async (req, res) => {
-  const employees = await User.findAll({ where: { role: 'employee' }, attributes: ['id','name','email','mobile','role','created_at'] });
+  const employees = await User.findAll({ where: { role: ['seller','manager'] }, attributes: ['id','name','email','mobile','role','created_at'] });
   res.json({ employees });
 });
 
@@ -15,32 +15,45 @@ router.post('/employees',
   body('name').notEmpty(),
   body('email').isEmail(),
   body('password').isLength({ min: 6 }),
+  body('password_confirm').custom((value, { req }) => {
+    if (value !== req.body.password) throw new Error('Passwords do not match');
+    return true;
+  }),
+  body('role').optional().isIn(['seller','manager']),
   async (req, res) => {
     const errors = validationResult(req);
-    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
-    const { name, email, password, mobile } = req.body;
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array(), message: 'Validation error' });
+    const { name, email, password, mobile, role = 'seller' } = req.body;
     const exists = await User.findOne({ where: { email } });
     if (exists) return res.status(409).json({ message: 'Email already exists' });
     const bcrypt = require('bcrypt');
     const password_hash = await bcrypt.hash(password, 10);
-    const user = await User.create({ name, email, mobile, role: 'employee', password_hash });
-    res.status(201).json({ id: user.id, name: user.name, email: user.email, mobile: user.mobile });
+    const user = await User.create({ name, email, mobile, role, password_hash });
+    res.status(201).json({ id: user.id, name: user.name, email: user.email, mobile: user.mobile, role: user.role });
   }
 );
 
-router.put('/employees/:id', async (req, res) => {
-  const id = req.params.id;
-  const user = await User.findByPk(id);
-  if (!user || user.role !== 'employee') return res.status(404).json({ message: 'Employee not found' });
-  const { name, email, mobile } = req.body;
-  await user.update({ name: name ?? user.name, email: email ?? user.email, mobile: mobile ?? user.mobile });
-  res.json({ id: user.id, name: user.name, email: user.email, mobile: user.mobile });
-});
+router.put('/employees/:id',
+  body('role').optional().isIn(['seller','manager']),
+  async (req, res) => {
+    const id = req.params.id;
+    const user = await User.findByPk(id);
+    if (!user || user.role === 'admin') return res.status(404).json({ message: 'Employee not found' });
+    const { name, email, mobile, role } = req.body;
+    await user.update({
+      name: name ?? user.name,
+      email: email ?? user.email,
+      mobile: mobile ?? user.mobile,
+      role: role ?? user.role,
+    });
+    res.json({ id: user.id, name: user.name, email: user.email, mobile: user.mobile, role: user.role });
+  }
+);
 
 router.delete('/employees/:id', async (req, res) => {
   const id = req.params.id;
   const user = await User.findByPk(id);
-  if (!user || user.role !== 'employee') return res.status(404).json({ message: 'Employee not found' });
+  if (!user || user.role === 'admin') return res.status(404).json({ message: 'Employee not found' });
   await user.destroy();
   res.json({ success: true });
 });

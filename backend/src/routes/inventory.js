@@ -1,11 +1,11 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const { Inventory } = require('../../models');
-const { authenticate, isEmployeeOrAdmin } = require('../middleware/auth');
+const { authenticate, authorizeRoles } = require('../middleware/auth');
 
 const router = express.Router();
 
-router.get('/', authenticate, isEmployeeOrAdmin, async (req, res) => {
+router.get('/', authenticate, authorizeRoles('seller','manager','admin'), async (req, res) => {
   const { q } = req.query;
   const where = {};
   if (q) where.name = q;
@@ -13,7 +13,7 @@ router.get('/', authenticate, isEmployeeOrAdmin, async (req, res) => {
   res.json({ items });
 });
 
-router.post('/', authenticate, isEmployeeOrAdmin,
+router.post('/', authenticate, authorizeRoles('manager','admin'),
   body('name').notEmpty(),
   body('unit').notEmpty(),
   body('quantity').isFloat(),
@@ -26,7 +26,7 @@ router.post('/', authenticate, isEmployeeOrAdmin,
   }
 );
 
-router.put('/:id', authenticate, isEmployeeOrAdmin, async (req, res) => {
+router.put('/:id', authenticate, authorizeRoles('manager','admin'), async (req, res) => {
   const item = await Inventory.findByPk(req.params.id);
   if (!item) return res.status(404).json({ message: 'Item not found' });
   const { name, unit, quantity, threshold_alert } = req.body;
@@ -39,7 +39,7 @@ router.put('/:id', authenticate, isEmployeeOrAdmin, async (req, res) => {
   res.json({ item });
 });
 
-router.post('/:id/adjust', authenticate, isEmployeeOrAdmin,
+router.post('/:id/adjust', authenticate, authorizeRoles('manager','admin'),
   body('delta').isFloat(),
   async (req, res) => {
     const item = await Inventory.findByPk(req.params.id);

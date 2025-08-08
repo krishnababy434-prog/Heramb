@@ -23,4 +23,19 @@ const isEmployeeOrAdmin = (req, res, next) => {
   return res.status(403).json({ message: 'Forbidden' });
 };
 
-module.exports = { authenticate, isAdmin, isEmployeeOrAdmin };
+const isSeller = (req, res, next) => {
+  if (req.user && req.user.role === 'seller') return next();
+  return res.status(403).json({ message: 'Seller only' });
+};
+
+const isManager = (req, res, next) => {
+  if (req.user && req.user.role === 'manager') return next();
+  return res.status(403).json({ message: 'Manager only' });
+};
+
+const authorizeRoles = (...roles) => (req, res, next) => {
+  if (req.user && roles.includes(req.user.role)) return next();
+  return res.status(403).json({ message: 'Forbidden' });
+};
+
+module.exports = { authenticate, isAdmin, isSeller, isManager, authorizeRoles };
