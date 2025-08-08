@@ -42,8 +42,6 @@ module.exports = {
       await queryInterface.removeColumn('orders', 'status');
     }
 
-    if (queryInterface.sequelize.getDialect() === 'postgres') {
-      await queryInterface.sequelize.query('DROP TYPE IF EXISTS "enum_orders_status"');
-    }
+
   }
 };
