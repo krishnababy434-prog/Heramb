@@ -15,15 +15,11 @@ router.post('/employees',
   body('name').notEmpty(),
   body('email').isEmail(),
   body('password').isLength({ min: 6 }),
-  body('password_confirm').custom((value, { req }) => {
-    if (value !== req.body.password) throw new Error('Passwords do not match');
-    return true;
-  }),
-  body('role').optional().isIn(['seller','manager']),
+  body('role').optional().isIn(['seller','manager','employee']),
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array(), message: 'Validation error' });
-    const { name, email, password, mobile, role = 'seller' } = req.body;
+    const { name, email, password, mobile, role = 'employee' } = req.body;
     const exists = await User.findOne({ where: { email } });
     if (exists) return res.status(409).json({ message: 'Email already exists' });
     const bcrypt = require('bcrypt');

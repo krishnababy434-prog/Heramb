@@ -1,4 +1,5 @@
-require('dotenv').config({ path: require('path').resolve('backend/.env') });
+require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') });
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'testsecret';
 const path = require('path');
 const express = require('express');
 const helmet = require('helmet');

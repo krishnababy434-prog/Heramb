@@ -1,7 +1,7 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const { Order, OrderItem, Menu, ComboMenu, User, Coupon } = require('../../models');
-const { authenticate, authorizeRoles } = require('../middleware/auth');
+const { authenticate, isEmployeeOrAdmin, authorizeRoles } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -31,7 +31,7 @@ async function recalcOrderTotals(order) {
 }
 
 // Create a final order directly
-router.post('/', authenticate, authorizeRoles('seller','admin'),
+router.post('/', authenticate, isEmployeeOrAdmin,
   body('customer_name').notEmpty(),
   body('items').isArray({ min: 1 }),
   async (req, res) => {
