@@ -1,0 +1,19 @@
+# Node
+node_modules/
+.env
+*.log
+coverage/
+
+# Frontend
+dist/
+
+# Uploads
+backend/uploads/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/

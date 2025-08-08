@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, feature/* ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-backend:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_DATABASE: herambdb_test
+          MYSQL_ROOT_PASSWORD: root
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install backend deps
+        run: |
+          cd backend
+          npm ci
+      - name: Configure env
+        run: |
+          cp backend/.env.example backend/.env
+          sed -i 's/DB_HOST=.*/DB_HOST=127.0.0.1/' backend/.env
+          sed -i 's/DB_NAME=.*/DB_NAME=herambdb_test/' backend/.env
+          sed -i 's/DB_USER=.*/DB_USER=root/' backend/.env
+          sed -i 's/DB_PASSWORD=.*/DB_PASSWORD=root/' backend/.env
+      - name: Migrate and run tests
+        run: |
+          cd backend
+          npx sequelize-cli db:migrate --env development
+          npm test
