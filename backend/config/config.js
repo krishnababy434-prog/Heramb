@@ -19,12 +19,8 @@ module.exports = {
     logging: false,
   },
   test: {
-    username: DB_USER,
-    password: DB_PASSWORD,
-    database: `${DB_NAME}_test`,
-    host: DB_HOST,
-    port: DB_PORT,
-    dialect: 'mysql',
+    dialect: 'sqlite',
+    storage: ':memory:',
     logging: false,
   },
   production: {
