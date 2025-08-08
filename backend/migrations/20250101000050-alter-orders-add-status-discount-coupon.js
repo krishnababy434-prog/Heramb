@@ -41,7 +41,5 @@ module.exports = {
     if (table.status) {
       await queryInterface.removeColumn('orders', 'status');
     }
-
-
   }
 };
