@@ -38,4 +38,4 @@ const authorizeRoles = (...roles) => (req, res, next) => {
   return res.status(403).json({ message: 'Forbidden' });
 };
 
-module.exports = { authenticate, isAdmin, isSeller, isManager, authorizeRoles };
+module.exports = { authenticate, isAdmin, isEmployeeOrAdmin, isSeller, isManager, authorizeRoles };
