@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '../lib/api'
+import { assetUrl, defaultImage } from '../lib/assets'
 
 export default function Combos() {
   const qc = useQueryClient()
@@ -8,6 +9,13 @@ export default function Combos() {
   const { data: menus } = useQuery({ queryKey: ['menus'], queryFn: async () => (await api.get('/menus')).data.menus })
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState({ name: '', price: '', items: [], photo: null })
+  const actualPrice = useMemo(()=>{
+    if (!form.items?.length) return 0
+    return form.items.reduce((sum, it) => {
+      const m = menus?.find(mm => mm.id === it.menu_id)
+      return sum + (Number(m?.price || 0) * Number(it.quantity || 1))
+    }, 0)
+  }, [form.items, menus])
 
   const create = useMutation({
     mutationFn: async () => {
@@ -35,10 +43,10 @@ export default function Combos() {
         <h2 className="text-2xl font-semibold">Combos</h2>
         <button className="bg-blue-600 text-white px-3 py-2 rounded" onClick={()=>setOpen(true)}>Add</button>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {combos?.map(c => (
-          <div key={c.id} className="bg-white rounded shadow">
-            {c.photo_url && <img src={c.photo_url} className="w-full h-40 object-cover rounded-t" />}
+          <div key={c.id} className="bg-white rounded shadow overflow-hidden">
+            <img src={assetUrl(c.photo_url) || defaultImage} className="w-full h-40 object-cover" />
             <div className="p-3">
               <div className="font-semibold">{c.name}</div>
               <div className="text-sm text-gray-600">₹ {c.price}</div>
@@ -47,17 +55,29 @@ export default function Combos() {
           </div>
         ))}
       </div>
-      {open && (
+{open && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center">
           <div className="bg-white p-4 rounded shadow w-[30rem] space-y-2">
             <h3 className="font-semibold">Add Combo</h3>
             <input className="border rounded p-2 w-full" placeholder="Name" value={form.name} onChange={e=>setForm({...form, name:e.target.value})} />
-            <input className="border rounded p-2 w-full" placeholder="Price" value={form.price} onChange={e=>setForm({...form, price:e.target.value})} />
+            <div className="grid grid-cols-2 gap-2 items-end">
+              <div>
+                <label className="text-xs text-gray-500">Combo price (you want to set)</label>
+                <input className="border rounded p-2 w-full" placeholder="Combo Price" value={form.price} onChange={e=>setForm({...form, price:e.target.value})} />
+              </div>
+              <div>
+                <div className="text-xs text-gray-500">Actual total price of items</div>
+                <div className="font-semibold">₹ {Number(actualPrice).toFixed(2)}</div>
+              </div>
+            </div>
             <div className="border rounded p-2 h-40 overflow-auto">
               {menus?.map(m => (
-                <label key={m.id} className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={!!form.items.find(i=>i.menu_id===m.id)} onChange={()=>toggleItem(m.id)} />
-                  {m.name}
+                <label key={m.id} className="flex items-center gap-2 text-sm justify-between">
+                  <span className="flex items-center gap-2">
+                    <input type="checkbox" checked={!!form.items.find(i=>i.menu_id===m.id)} onChange={()=>toggleItem(m.id)} />
+                    {m.name}
+                  </span>
+                  <span className="text-gray-500">₹ {m.price}</span>
                 </label>
               ))}
             </div>
