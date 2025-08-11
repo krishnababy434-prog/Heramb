@@ -28,27 +28,48 @@ export default function AppLayout() {
         </div>
       </header>
       <div className="flex">
-        <aside className="w-64 bg-white border-r min-h-screen p-4 space-y-2 hidden md:block">
+                <aside className="w-64 bg-white border-r min-h-screen p-4 space-y-2 hidden md:block">
           <nav className="space-y-2">
-            <Link className="block hover:text-brand-yellow" to="/">Dashboard</Link>
-            {user?.role === 'admin' && <Link className="block hover:text-brand-yellow" to="/employees">Employees</Link>}
-            <Link className="block hover:text-brand-yellow" to="/menus">Menus</Link>
-            <Link className="block hover:text-brand-yellow" to="/combos">Combos</Link>
-            <Link className="block hover:text-brand-yellow" to="/orders">Orders</Link>
-            <Link className="block hover:text-brand-yellow" to="/expenses">Expenses</Link>
-            <Link className="block hover:text-brand-yellow" to="/inventory">Inventory</Link>
-            {user?.role === 'admin' && <Link className="block hover:text-brand-yellow" to="/coupons">Coupons</Link>}
-            {user?.role === 'seller' && <Link className="block hover:text-brand-yellow" to="/seller">Seller Dashboard</Link>}
+            {user?.role === 'admin' && (
+              <>
+                <Link className="block hover:text-brand-yellow" to="/">Dashboard</Link>
+                <Link className="block hover:text-brand-yellow" to="/employees">Employees</Link>
+                <Link className="block hover:text-brand-yellow" to="/menus">Menus</Link>
+                <Link className="block hover:text-brand-yellow" to="/combos">Combos</Link>
+                <Link className="block hover:text-brand-yellow" to="/orders">Orders</Link>
+                <Link className="block hover:text-brand-yellow" to="/expenses">Expenses</Link>
+                <Link className="block hover:text-brand-yellow" to="/inventory">Inventory</Link>
+                <Link className="block hover:text-brand-yellow" to="/coupons">Coupons</Link>
+              </>
+            )}
+            {user?.role === 'seller' && (
+              <Link className="block hover:text-brand-yellow" to="/seller">Create Order</Link>
+            )}
+            {user?.role === 'manager' && (
+              <>
+                <Link className="block hover:text-brand-yellow" to="/expenses">Expenses</Link>
+                <Link className="block hover:text-brand-yellow" to="/inventory">Inventory</Link>
+              </>
+            )}
           </nav>
           <button onClick={logout} className="mt-6 text-sm text-red-600">Logout</button>
         </aside>
-        <main className="flex-1 p-4 md:p-6">
+<main className="flex-1 p-4 md:p-6">
           <div className="md:hidden bg-white border-b p-2 flex gap-3 overflow-x-auto text-sm">
-            <Link to="/">Home</Link>
-            <Link to="/menus">Menus</Link>
-            <Link to="/combos">Combos</Link>
-            <Link to="/orders">Orders</Link>
-            <Link to="/inventory">Inventory</Link>
+            {user?.role === 'admin' && (<>
+              <Link to="/">Home</Link>
+              <Link to="/menus">Menus</Link>
+              <Link to="/combos">Combos</Link>
+              <Link to="/orders">Orders</Link>
+              <Link to="/expenses">Expenses</Link>
+              <Link to="/inventory">Inventory</Link>
+              <Link to="/coupons">Coupons</Link>
+            </>)}
+            {user?.role === 'seller' && <Link to="/seller">Create Order</Link>}
+            {user?.role === 'manager' && (<>
+              <Link to="/expenses">Expenses</Link>
+              <Link to="/inventory">Inventory</Link>
+            </>)}
           </div>
           <Outlet />
         </main>

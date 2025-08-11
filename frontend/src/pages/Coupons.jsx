@@ -8,7 +8,14 @@ export default function Coupons() {
   const [form, setForm] = useState({ code: '', type: 'percentage', value: '', start_date: '', end_date: '', max_uses: '', is_active: true })
 
   const create = useMutation({
-    mutationFn: async () => (await api.post('/coupons', { ...form, value: Number(form.value) })).data,
+    mutationFn: async () => {
+      const payload = {
+        ...form,
+        value: Number(form.value),
+        max_uses: form.max_uses ? Number(form.max_uses) : null,
+      }
+      return (await api.post('/coupons', payload)).data
+    },
     onSuccess: () => { setForm({ code:'', type:'percentage', value:'', start_date:'', end_date:'', max_uses:'', is_active: true }); qc.invalidateQueries({ queryKey: ['coupons'] }) }
   })
 
