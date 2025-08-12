@@ -46,7 +46,7 @@ export default function Combos() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {combos?.map(c => (
           <div key={c.id} className="bg-white rounded shadow overflow-hidden">
-            <img src={assetUrl(c.photo_url) || defaultImage} className="w-full h-40 object-cover" />
+            <img src={assetUrl(c.photo_url) || defaultImage} onError={(e)=>{ e.currentTarget.src = defaultImage }} className="w-full h-40 object-cover" />
             <div className="p-3">
               <div className="font-semibold">{c.name}</div>
               <div className="text-sm text-gray-600">₹ {c.price}</div>

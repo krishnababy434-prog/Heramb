@@ -52,7 +52,7 @@ export default function Menus() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {data?.map(m => (
           <div key={m.id} className="bg-white rounded shadow overflow-hidden">
-            <img src={assetUrl(m.photo_url) || defaultImage} className="w-full h-40 object-cover" />
+            <img src={assetUrl(m.photo_url) || defaultImage} onError={(e)=>{ e.currentTarget.src = defaultImage }} className="w-full h-40 object-cover" />
             <div className="p-3">
               <div className="font-semibold flex items-center justify-between">
                 <span>{m.name}</span>
