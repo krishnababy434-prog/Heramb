@@ -32,7 +32,7 @@ async function recalcOrderTotals(order) {
 }
 
 // Create a final order directly
-router.post('/', authenticate, isEmployeeOrAdmin,
+router.post('/', authenticate, authorizeRoles('seller','employee'),
   body('customer_name').notEmpty(),
   body('items').isArray({ min: 1 }),
   async (req, res) => {
@@ -84,7 +84,7 @@ router.post('/', authenticate, isEmployeeOrAdmin,
 );
 
 // Draft order endpoints
-router.get('/current', authenticate, authorizeRoles('seller','admin'), async (req, res) => {
+router.get('/current', authenticate, authorizeRoles('seller'), async (req, res) => {
   let order = await Order.findOne({ where: { created_by: req.user.id, status: 'draft' }, include: [{ model: OrderItem, as: 'items' }] });
   if (!order) {
     order = await Order.create({ customer_name: 'Walk-in', subtotal: 0, tax: 0, total: 0, discount: 0, status: 'draft', created_by: req.user.id });
@@ -93,7 +93,7 @@ router.get('/current', authenticate, authorizeRoles('seller','admin'), async (re
   res.json({ order });
 });
 
-router.post('/current/items', authenticate, authorizeRoles('seller','admin'),
+router.post('/current/items', authenticate, authorizeRoles('seller'),
   body('menu_id').optional().isInt(),
   body('combo_id').optional().isInt(),
   body('quantity').isInt({ gt: 0 }),
@@ -119,7 +119,7 @@ router.post('/current/items', authenticate, authorizeRoles('seller','admin'),
   }
 );
 
-router.patch('/current/items/:id', authenticate, authorizeRoles('seller','admin'),
+router.patch('/current/items/:id', authenticate, authorizeRoles('seller'),
   body('quantity').optional().isInt({ gt: 0 }),
   async (req, res) => {
     const order = await Order.findOne({ where: { created_by: req.user.id, status: 'draft' } });
@@ -134,7 +134,7 @@ router.patch('/current/items/:id', authenticate, authorizeRoles('seller','admin'
   }
 );
 
-router.delete('/current/items/:id', authenticate, authorizeRoles('seller','admin'), async (req, res) => {
+router.delete('/current/items/:id', authenticate, authorizeRoles('seller'), async (req, res) => {
   const order = await Order.findOne({ where: { created_by: req.user.id, status: 'draft' } });
   if (!order) return res.status(404).json({ message: 'No draft order' });
   const item = await OrderItem.findByPk(req.params.id);
@@ -163,7 +163,7 @@ router.post('/current/apply-coupon', authenticate, authorizeRoles('seller','admi
   }
 );
 
-router.post('/submit', authenticate, authorizeRoles('seller','admin'),
+router.post('/submit', authenticate, authorizeRoles('seller'),
   body('customer_name').notEmpty(),
   body('mobile').optional().isString(),
   async (req, res) => {
@@ -200,6 +200,62 @@ router.get('/', authenticate, authorizeRoles('seller','manager','admin'), async 
     include: [{ model: OrderItem, as: 'items' }],
   });
   res.json({ orders });
+});
+
+// View order details
+router.get('/:id', authenticate, authorizeRoles('seller','manager','admin'), async (req, res) => {
+  const order = await Order.findByPk(req.params.id, { include: [{ model: OrderItem, as: 'items' }] });
+  if (!order) return res.status(404).json({ message: 'Order not found' });
+  if (req.user.role === 'seller' && order.created_by !== req.user.id) {
+    return res.status(403).json({ message: 'Forbidden' });
+  }
+  res.json({ order });
+});
+
+// Update basic order fields (customer_name, mobile)
+router.patch('/:id', authenticate, authorizeRoles('seller','admin'),
+  body('customer_name').optional().isString(),
+  body('mobile').optional().isString(),
+  async (req, res) => {
+    const order = await Order.findByPk(req.params.id);
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+
+    // Sellers can edit only their own orders and only on the same calendar date
+    if (req.user.role === 'seller') {
+      if (order.created_by !== req.user.id) return res.status(403).json({ message: 'Forbidden' });
+      const createdAt = new Date(order.created_at);
+      const now = new Date();
+      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+      if (!(createdAt >= start && createdAt < end)) return res.status(403).json({ message: 'Only today\'s orders can be edited' });
+    }
+
+    const { customer_name, mobile } = req.body;
+    const updates = {};
+    if (typeof customer_name !== 'undefined') updates.customer_name = customer_name;
+    if (typeof mobile !== 'undefined') updates.mobile = mobile;
+    await order.update(updates);
+    const updated = await Order.findByPk(order.id, { include: [{ model: OrderItem, as: 'items' }] });
+    res.json({ order: updated });
+  }
+);
+
+// Delete order
+router.delete('/:id', authenticate, authorizeRoles('seller','admin'), async (req, res) => {
+  const order = await Order.findByPk(req.params.id);
+  if (!order) return res.status(404).json({ message: 'Order not found' });
+
+  if (req.user.role === 'seller') {
+    if (order.created_by !== req.user.id) return res.status(403).json({ message: 'Forbidden' });
+    const createdAt = new Date(order.created_at);
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    if (!(createdAt >= start && createdAt < end)) return res.status(403).json({ message: 'Only today\'s orders can be deleted' });
+  }
+
+  await order.destroy();
+  res.json({ success: true });
 });
 
 module.exports = router;
