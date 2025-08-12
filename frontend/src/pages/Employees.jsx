@@ -40,28 +40,30 @@ export default function Employees() {
         <h2 className="text-2xl font-semibold">Employees</h2>
         <button className="bg-blue-600 text-white px-3 py-2 rounded" onClick={()=>{setError(''); setOpen(true)}}>Add</button>
       </div>
-      <table className="w-full bg-white rounded shadow text-sm">
-        <thead><tr className="text-left"><th className="p-2">Name</th><th className="p-2">Email</th><th className="p-2">Mobile</th><th className="p-2">Role</th><th className="p-2 text-right">Actions</th></tr></thead>
-        <tbody>
-          {data?.map(e=> (
-            <tr key={e.id} className="border-t">
-              <td className="p-2">{e.name}</td>
-              <td className="p-2">{e.email}</td>
-              <td className="p-2">{e.mobile}</td>
-              <td className="p-2">{e.role}</td>
-              <td className="p-2">
-                <div className="flex gap-2 justify-end">
-                  <button className="px-2 py-1 rounded bg-gray-100" onClick={()=>{ setEditing(e); setForm({ name:e.name, email:e.email, mobile:e.mobile||'', password:'', password_confirm:'', role:e.role }); setOpen(true) }}>Edit</button>
-                  <button className="px-2 py-1 rounded bg-red-50 text-red-600" onClick={()=>del.mutate(e.id)}>Delete</button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="w-full overflow-x-auto">
+        <table className="min-w-full bg-white rounded shadow text-sm">
+          <thead><tr className="text-left"><th className="p-2">Name</th><th className="p-2">Email</th><th className="p-2">Mobile</th><th className="p-2">Role</th><th className="p-2 text-right">Actions</th></tr></thead>
+          <tbody>
+            {data?.map(e=> (
+              <tr key={e.id} className="border-t">
+                <td className="p-2">{e.name}</td>
+                <td className="p-2">{e.email}</td>
+                <td className="p-2">{e.mobile}</td>
+                <td className="p-2">{e.role}</td>
+                <td className="p-2">
+                  <div className="flex gap-2 justify-end">
+                    <button className="px-2 py-1 rounded bg-gray-100" onClick={()=>{ setEditing(e); setForm({ name:e.name, email:e.email, mobile:e.mobile||'', password:'', password_confirm:'', role:e.role }); setOpen(true) }}>Edit</button>
+                    <button className="px-2 py-1 rounded bg-red-50 text-red-600" onClick={()=>del.mutate(e.id)}>Delete</button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       {open && (
-        <div className="fixed inset-0 bg-black/30 flex items-center justify-center">
-          <div className="bg-white p-4 rounded shadow w-96 space-y-2">
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center px-4">
+          <div className="bg-white p-4 rounded shadow w-full max-w-md mx-4 space-y-2">
             <h3 className="font-semibold">{editing ? 'Edit Employee' : 'Add Employee'}</h3>
             {error && <div className="text-red-600 text-sm">{error}</div>}
             <input className="border rounded p-2 w-full" placeholder="Name" value={form.name} onChange={e=>setForm({...form, name:e.target.value})} />

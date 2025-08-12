@@ -123,32 +123,20 @@ export default function SellerDashboard() {
 
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2" />
-        <div className="bg-white rounded-xl shadow p-3">
-          <div className="font-semibold mb-2">Previous Orders</div>
-          <div className="max-h-72 overflow-auto divide-y">
-            {(recentOrders||[]).length === 0 && <div className="text-sm text-gray-500 p-2">No orders for selected dates</div>}
-            {(recentOrders||[]).map(o => (
-              <div key={o.id} className="py-2 flex items-center justify-between text-sm">
-                <div className="opacity-70">#{o.id}</div>
-                <div className="opacity-70">{new Date(o.created_at).toLocaleTimeString()}</div>
-                <div className="font-semibold">₹ {Number(o.total).toFixed(2)}</div>
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* Previous Orders section removed for a cleaner create menu experience */}
       </div>
 
       <div className="fixed left-0 right-0 bottom-0 z-20">
         <div className="max-w-5xl mx-auto p-3">
-          <div className="rounded-2xl shadow-lg flex items-center justify-between px-4 py-3" style={{ background:'#111', color:'#fff' }}>
+          <div className="rounded-2xl shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3" style={{ background:'#111', color:'#fff' }}>
             <div className="text-sm">
               <div className="opacity-80">Total</div>
               <div className="text-2xl font-bold">₹ {Number(draft?.total || 0).toFixed(2)}</div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
               <input className="hidden md:block border rounded p-2 bg-white text-black" placeholder="Coupon code" onKeyDown={(e)=>{ if(e.key==='Enter') applyCoupon.mutate({ code: e.currentTarget.value }) }} />
-              <input className="border rounded p-2 bg-white text-black" placeholder="Customer Name" value={customerName} onChange={(e)=>setCustomerName(e.target.value)} />
-              <input className="border rounded p-2 bg-white text-black w-40" placeholder="Mobile" value={customerMobile} onChange={(e)=>setCustomerMobile(e.target.value)} />
+              <input className="border rounded p-2 bg-white text-black w-full sm:w-auto" placeholder="Customer Name" value={customerName} onChange={(e)=>setCustomerName(e.target.value)} />
+              <input className="border rounded p-2 bg-white text-black w-full sm:w-40" placeholder="Mobile" value={customerMobile} onChange={(e)=>setCustomerMobile(e.target.value)} />
               <button className="px-5 py-3 rounded-full font-semibold transition transform hover:scale-105" style={{ background:'#FFD20A', color:'#111' }} onClick={()=>{
                 submit.mutate({ customer_name: customerName || 'Walk-in', mobile: customerMobile || '' })
               }}>Order Now</button>
