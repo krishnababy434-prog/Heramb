@@ -240,6 +240,96 @@ router.patch('/:id', authenticate, authorizeRoles('seller','admin'),
   }
 );
 
+// Add an item to an existing order
+router.post('/:id/items', authenticate, authorizeRoles('seller','admin'),
+  body('menu_id').optional().isInt(),
+  body('combo_id').optional().isInt(),
+  body('quantity').isInt({ gt: 0 }),
+  async (req, res) => {
+    const order = await Order.findByPk(req.params.id);
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+
+    if (req.user.role === 'seller') {
+      if (order.created_by !== req.user.id) return res.status(403).json({ message: 'Forbidden' });
+      const createdAt = new Date(order.created_at);
+      const now = new Date();
+      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+      if (!(createdAt >= start && createdAt < end)) return res.status(403).json({ message: 'Only today\'s orders can be edited' });
+    }
+
+    const { menu_id, combo_id, quantity } = req.body;
+    if (!menu_id && !combo_id) return res.status(400).json({ message: 'menu_id or combo_id required' });
+
+    let unit_price = 0;
+    if (menu_id) {
+      const menu = await Menu.findByPk(menu_id);
+      if (!menu) return res.status(400).json({ message: 'Menu not found' });
+      unit_price = Number(menu.price);
+    } else if (combo_id) {
+      const combo = await ComboMenu.findByPk(combo_id);
+      if (!combo) return res.status(400).json({ message: 'Combo not found' });
+      unit_price = Number(combo.price);
+    }
+
+    await OrderItem.create({ order_id: order.id, menu_id: menu_id || null, combo_id: combo_id || null, quantity, unit_price });
+    await recalcOrderTotals(order);
+    const updated = await Order.findByPk(order.id, { include: [{ model: OrderItem, as: 'items' }] });
+    res.status(201).json({ order: updated });
+  }
+);
+
+// Update an item on an existing order
+router.patch('/:id/items/:itemId', authenticate, authorizeRoles('seller','admin'),
+  body('quantity').optional().isInt({ gt: 0 }),
+  async (req, res) => {
+    const order = await Order.findByPk(req.params.id);
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+
+    if (req.user.role === 'seller') {
+      if (order.created_by !== req.user.id) return res.status(403).json({ message: 'Forbidden' });
+      const createdAt = new Date(order.created_at);
+      const now = new Date();
+      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+      if (!(createdAt >= start && createdAt < end)) return res.status(403).json({ message: 'Only today\'s orders can be edited' });
+    }
+
+    const item = await OrderItem.findByPk(req.params.itemId);
+    if (!item || item.order_id !== order.id) return res.status(404).json({ message: 'Item not found' });
+
+    const { quantity } = req.body;
+    if (typeof quantity !== 'undefined') await item.update({ quantity });
+
+    await recalcOrderTotals(order);
+    const updated = await Order.findByPk(order.id, { include: [{ model: OrderItem, as: 'items' }] });
+    res.json({ order: updated });
+  }
+);
+
+// Remove an item from an existing order
+router.delete('/:id/items/:itemId', authenticate, authorizeRoles('seller','admin'), async (req, res) => {
+  const order = await Order.findByPk(req.params.id);
+  if (!order) return res.status(404).json({ message: 'Order not found' });
+
+  if (req.user.role === 'seller') {
+    if (order.created_by !== req.user.id) return res.status(403).json({ message: 'Forbidden' });
+    const createdAt = new Date(order.created_at);
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    if (!(createdAt >= start && createdAt < end)) return res.status(403).json({ message: 'Only today\'s orders can be edited' });
+  }
+
+  const item = await OrderItem.findByPk(req.params.itemId);
+  if (!item || item.order_id !== order.id) return res.status(404).json({ message: 'Item not found' });
+
+  await item.destroy();
+  await recalcOrderTotals(order);
+  const updated = await Order.findByPk(order.id, { include: [{ model: OrderItem, as: 'items' }] });
+  res.json({ order: updated });
+});
+
 // Delete order
 router.delete('/:id', authenticate, authorizeRoles('seller','admin'), async (req, res) => {
   const order = await Order.findByPk(req.params.id);
