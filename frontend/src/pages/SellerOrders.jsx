@@ -112,8 +112,8 @@ export default function SellerOrders() {
       </div>
 
       {viewOrder && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={()=>setViewOrder(null)}>
-          <div className="bg-white rounded-lg p-4 w/full max-w-md" onClick={(e)=>e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4" onClick={()=>setViewOrder(null)}>
+          <div className="bg-white rounded-lg p-4 w-full max-w-md mx-4" onClick={(e)=>e.stopPropagation()}>
             <div className="font-semibold mb-2">Order #{viewOrder.id}</div>
             <div className="text-sm mb-2">{viewOrder.customer_name} — {viewOrder.mobile || 'No mobile'}</div>
             <div className="text-sm mb-2">Placed at {new Date(viewOrder.created_at).toLocaleString()}</div>
@@ -132,13 +132,13 @@ export default function SellerOrders() {
       )}
 
       {editingOrder && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={()=>setEditingOrder(null)}>
-          <div className="bg-white rounded-lg p-4 w/full max-w-4xl" onClick={(e)=>e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4" onClick={()=>setEditingOrder(null)}>
+          <div className="bg-white rounded-lg p-4 w-full max-w-4xl mx-4" onClick={(e)=>e.stopPropagation()}>
             <div className="flex items-center justify-between mb-3">
               <div className="font-semibold">Edit Order #{editingOrder.id}</div>
               <button className="text-gray-600" onClick={()=>setEditingOrder(null)}>✕</button>
             </div>
-            <div className="flex gap-4">
+            <div className="flex flex-col md:flex-row gap-4">
               <div className="flex-1 space-y-3">
                 <div className="flex gap-2">
                   <input className="border rounded p-2 flex-1" placeholder="Customer Name" value={editCustomer} onChange={e=>setEditCustomer(e.target.value)} />

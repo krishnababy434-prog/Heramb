@@ -56,8 +56,8 @@ export default function Combos() {
         ))}
       </div>
 {open && (
-        <div className="fixed inset-0 bg-black/30 flex items-center justify-center">
-          <div className="bg-white p-4 rounded shadow w-[30rem] space-y-2">
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center px-4">
+          <div className="bg-white p-4 rounded shadow w-full max-w-lg mx-4 space-y-2">
             <h3 className="font-semibold">Add Combo</h3>
             <input className="border rounded p-2 w-full" placeholder="Name" value={form.name} onChange={e=>setForm({...form, name:e.target.value})} />
             <div className="grid grid-cols-2 gap-2 items-end">

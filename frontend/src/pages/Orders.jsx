@@ -64,20 +64,22 @@ export default function Orders() {
         </div>
         <div className="bg-white p-4 rounded shadow space-y-3">
           <div className="font-semibold">Bill</div>
-          <table className="w-full text-sm">
-            <thead><tr className="text-left"><th className="p-2">Item</th><th className="p-2">Qty</th><th className="p-2">Rate</th><th className="p-2">Amt</th><th></th></tr></thead>
-            <tbody>
-              {items.map((it, idx)=> (
-                <tr key={idx} className="border-t">
-                  <td className="p-2">{it.name}</td>
-                  <td className="p-2"><input type="number" min={1} className="border rounded p-1 w-16" value={it.quantity} onChange={e=>updateQty(idx, Number(e.target.value))} /></td>
-                  <td className="p-2">₹ {it.unit_price}</td>
-                  <td className="p-2">₹ {(Number(it.unit_price)*Number(it.quantity)).toFixed(2)}</td>
-                  <td className="p-2 text-right"><button onClick={()=>removeItem(idx)} className="text-red-600">x</button></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="w-full overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead><tr className="text-left"><th className="p-2">Item</th><th className="p-2">Qty</th><th className="p-2">Rate</th><th className="p-2">Amt</th><th></th></tr></thead>
+              <tbody>
+                {items.map((it, idx)=> (
+                  <tr key={idx} className="border-t">
+                    <td className="p-2">{it.name}</td>
+                    <td className="p-2"><input type="number" min={1} className="border rounded p-1 w-16" value={it.quantity} onChange={e=>updateQty(idx, Number(e.target.value))} /></td>
+                    <td className="p-2">₹ {it.unit_price}</td>
+                    <td className="p-2">₹ {(Number(it.unit_price)*Number(it.quantity)).toFixed(2)}</td>
+                    <td className="p-2 text-right"><button onClick={()=>removeItem(idx)} className="text-red-600">x</button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
           <div className="text-right font-semibold">Subtotal: ₹ {subtotal.toFixed(2)}</div>
           <div className="flex gap-2 justify-end">
             <input className="border rounded p-2" placeholder="Coupon code" value={coupon_code} onChange={e=>setCoupon(e.target.value)} />
