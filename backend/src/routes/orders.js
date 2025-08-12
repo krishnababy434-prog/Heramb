@@ -11,22 +11,23 @@ async function recalcOrderTotals(order) {
   const items = await OrderItem.findAll({ where: { order_id: order.id } });
   const subtotal = items.reduce((sum, it) => sum + Number(it.unit_price) * Number(it.quantity), 0);
   let discount = 0;
-  if (order.coupon_code) {
-    const coupon = await Coupon.findOne({ where: { code: order.coupon_code } });
+  let effectiveCouponCode = order.coupon_code || null;
+  if (effectiveCouponCode) {
+    const coupon = await Coupon.findOne({ where: { code: effectiveCouponCode } });
     const now = new Date();
     if (coupon && coupon.is_active && coupon.start_date <= now && coupon.end_date >= now && (!coupon.max_uses || coupon.used_count < coupon.max_uses)) {
       if (coupon.type === 'percentage') discount = +(subtotal * (Number(coupon.value) / 100)).toFixed(2);
       else discount = +Number(coupon.value).toFixed(2);
       if (discount > subtotal) discount = subtotal;
     } else {
-      // invalidate invalid coupon
-      order.coupon_code = null;
+      // persistently clear invalid/expired coupon to avoid incorrect increments later
+      effectiveCouponCode = null;
     }
   }
   const taxable = subtotal - discount;
   const tax = +(taxable * TAX_RATE).toFixed(2);
   const total = +(taxable + tax).toFixed(2);
-  await order.update({ subtotal, discount, tax, total });
+  await order.update({ subtotal, discount, tax, total, coupon_code: effectiveCouponCode });
   return { subtotal, discount, tax, total };
 }
 

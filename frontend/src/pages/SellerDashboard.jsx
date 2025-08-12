@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import api from '../lib/api'
 import { assetUrl, defaultImage } from '../lib/assets'
@@ -8,6 +8,16 @@ export default function SellerDashboard() {
   const { data: menus, isLoading: menusLoading } = useQuery({ queryKey: ['menus'], queryFn: async () => (await api.get('/menus')).data.menus })
   const { data: combos, isLoading: combosLoading } = useQuery({ queryKey: ['combos'], queryFn: async () => (await api.get('/combos')).data.combos })
   const { data: draft, isLoading: draftLoading } = useQuery({ queryKey: ['draftOrder'], queryFn: async () => (await api.get('/orders/current')).data.order })
+
+  // Daily sales filter state
+  const todayStr = useMemo(() => new Date().toISOString().slice(0,10), [])
+  const [from, setFrom] = useState(todayStr)
+  const [to, setTo] = useState(todayStr)
+
+  const { data: recentOrders } = useQuery({
+    queryKey: ['sellerOrders', from, to],
+    queryFn: async () => (await api.get(`/orders?limit=50&from=${from}&to=${to}`)).data.orders,
+  })
 
   const addItem = useMutation({
     mutationFn: async ({ menu_id, combo_id }) => (await api.post('/orders/current/items', { menu_id, combo_id, quantity: 1 })).data,
@@ -27,7 +37,7 @@ export default function SellerDashboard() {
   })
   const submit = useMutation({
     mutationFn: async ({ customer_name, mobile }) => (await api.post('/orders/submit', { customer_name, mobile })).data,
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['draftOrder'] }); qc.invalidateQueries({ queryKey: ['orders'] }) }
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['draftOrder'] }); qc.invalidateQueries({ queryKey: ['orders'] }); qc.invalidateQueries({ queryKey: ['sellerOrders'] }) }
   })
 
   const inc = (item) => updateItem.mutate({ id: item.id, quantity: item.quantity + 1 })
@@ -36,20 +46,32 @@ export default function SellerDashboard() {
   const findItemForMenu = (menuId) => draft?.items?.find(it => it.menu_id === menuId)
   const findItemForCombo = (comboId) => draft?.items?.find(it => it.combo_id === comboId)
 
+  const dailyTotal = useMemo(() => (recentOrders||[]).reduce((s,o)=> s + Number(o.total), 0), [recentOrders])
+
   return (
     <div className="min-h-[70vh]">
-      <div className="mb-4">
-        <h2 className="text-3xl font-extrabold tracking-tight" style={{ color: '#111' }}>Hungry? Let's serve!</h2>
-        <div className="text-sm text-gray-600">Tap + to add items. Theme: yellow and black with energetic vibes.</div>
+      <div className="mb-4 flex flex-col md:flex-row md:items-end md:justify-between gap-3">
+        <div>
+          <h2 className="text-3xl font-extrabold tracking-tight" style={{ color: '#111' }}>Hungry? Let's serve!</h2>
+          <div className="text-sm text-gray-600">Tap + to add items. Theme: yellow and black with energetic vibes.</div>
+        </div>
+        <div className="bg-white rounded-xl shadow p-3 flex flex-wrap items-center gap-2">
+          <div className="text-sm text-gray-600">Filter sales</div>
+          <input type="date" className="border rounded p-2" value={from} onChange={e=>setFrom(e.target.value)} />
+          <span className="text-gray-500">to</span>
+          <input type="date" className="border rounded p-2" value={to} onChange={e=>setTo(e.target.value)} />
+          <button className="px-3 py-2 rounded font-semibold transition transform hover:scale-105" style={{ background:'#FFD20A', color:'#111' }} onClick={()=>{ setFrom(todayStr); setTo(todayStr) }}>Today</button>
+          <div className="ml-auto text-sm"><span className="text-gray-500">Total:</span> <span className="font-bold">₹ {dailyTotal.toFixed(2)}</span></div>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
         {menus?.map(m => {
           const curr = findItemForMenu(m.id)
           return (
-            <div key={`m-${m.id}`} className="rounded-xl shadow-sm bg-white overflow-hidden hover:shadow-md transition">
+            <div key={`m-${m.id}`} className="rounded-xl shadow-sm bg-white overflow-hidden hover:shadow-md transition-transform duration-200 hover:scale-[1.02]">
               <div className="relative">
-                <img src={assetUrl(m.photo_url) || defaultImage} className="w-full h-36 object-cover" />
+                <img src={assetUrl(m.photo_url) || defaultImage} onError={(e)=>{ e.currentTarget.src = defaultImage }} className="w-full h-36 object-cover" />
                 <div className="absolute inset-0 bg-black/0 hover:bg-black/5 transition" />
               </div>
               <div className="p-3">
@@ -68,9 +90,9 @@ export default function SellerDashboard() {
         {combos?.map(c => {
           const curr = findItemForCombo(c.id)
           return (
-            <div key={`c-${c.id}`} className="rounded-xl shadow-sm bg-white overflow-hidden hover:shadow-md transition">
+            <div key={`c-${c.id}`} className="rounded-xl shadow-sm bg-white overflow-hidden hover:shadow-md transition-transform duration-200 hover:scale-[1.02]">
               <div className="relative">
-                <img src={assetUrl(c.photo_url) || defaultImage} className="w-full h-36 object-cover" />
+                <img src={assetUrl(c.photo_url) || defaultImage} onError={(e)=>{ e.currentTarget.src = defaultImage }} className="w-full h-36 object-cover" />
                 <div className="absolute inset-0 bg-black/0 hover:bg-black/5 transition" />
               </div>
               <div className="p-3">
@@ -87,6 +109,23 @@ export default function SellerDashboard() {
         })}
       </div>
 
+      <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2" />
+        <div className="bg-white rounded-xl shadow p-3">
+          <div className="font-semibold mb-2">Previous Orders</div>
+          <div className="max-h-72 overflow-auto divide-y">
+            {(recentOrders||[]).length === 0 && <div className="text-sm text-gray-500 p-2">No orders for selected dates</div>}
+            {(recentOrders||[]).map(o => (
+              <div key={o.id} className="py-2 flex items-center justify-between text-sm">
+                <div className="opacity-70">#{o.id}</div>
+                <div className="opacity-70">{new Date(o.created_at).toLocaleTimeString()}</div>
+                <div className="font-semibold">₹ {Number(o.total).toFixed(2)}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
       <div className="fixed left-0 right-0 bottom-0 z-20">
         <div className="max-w-5xl mx-auto p-3">
           <div className="rounded-2xl shadow-lg flex items-center justify-between px-4 py-3" style={{ background:'#111', color:'#fff' }}>
@@ -96,7 +135,7 @@ export default function SellerDashboard() {
             </div>
             <div className="flex items-center gap-2">
               <input className="hidden md:block border rounded p-2 bg-white text-black" placeholder="Coupon code" onKeyDown={(e)=>{ if(e.key==='Enter') applyCoupon.mutate({ code: e.currentTarget.value }) }} />
-              <button className="px-5 py-3 rounded-full font-semibold" style={{ background:'#FFD20A', color:'#111' }} onClick={()=>{
+              <button className="px-5 py-3 rounded-full font-semibold transition transform hover:scale-105" style={{ background:'#FFD20A', color:'#111' }} onClick={()=>{
                 const name = 'Walk-in'
                 const mob = ''
                 submit.mutate({ customer_name: name, mobile: mob })
