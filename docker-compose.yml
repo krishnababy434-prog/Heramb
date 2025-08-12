@@ -31,6 +31,8 @@ services:
   frontend:
     build: ./frontend
     command: npm run dev -- --host
+    environment:
+      - VITE_PROXY_TARGET=http://backend:4000
     volumes:
       - ./frontend:/app
     ports:

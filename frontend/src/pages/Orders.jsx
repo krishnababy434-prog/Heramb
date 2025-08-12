@@ -24,16 +24,19 @@ export default function Orders() {
 
   const create = useMutation({
     mutationFn: async () => (await api.post('/orders', { customer_name, mobile, items, coupon_code })).data,
-    onSuccess: () => { setItems([]); qc.invalidateQueries({ queryKey: ['orders'] }) }
+    onSuccess: () => { setItems([]); qc.invalidateQueries({ queryKey: ['orders'] }) },
+    onError: (err) => { alert(err?.response?.data?.message || 'Failed to create order') }
   })
 
   const editOrder = useMutation({
     mutationFn: async ({ id, customer_name, mobile }) => (await api.patch(`/orders/${id}`, { customer_name, mobile })).data,
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['orders'] }) }
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['orders'] }) },
+    onError: (err) => { alert(err?.response?.data?.message || 'Failed to edit order') }
   })
   const deleteOrder = useMutation({
     mutationFn: async ({ id }) => (await api.delete(`/orders/${id}`)).data,
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['orders'] }) }
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['orders'] }) },
+    onError: (err) => { alert(err?.response?.data?.message || 'Failed to delete order') }
   })
 
   return (
