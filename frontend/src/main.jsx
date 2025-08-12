@@ -14,6 +14,7 @@ import Expenses from './pages/Expenses'
 import Inventory from './pages/Inventory'
 import Coupons from './pages/Coupons'
 import SellerDashboard from './pages/SellerDashboard'
+import SellerOrders from './pages/SellerOrders'
 import AppLayout from './pages/AppLayout'
 
 const queryClient = new QueryClient()
@@ -33,6 +34,7 @@ const router = createBrowserRouter([
       { path: 'inventory', element: <Inventory /> },
       { path: 'coupons', element: <Coupons /> },
       { path: 'seller', element: <SellerDashboard /> },
+      { path: 'seller/orders', element: <SellerOrders /> },
     ],
   },
 ])

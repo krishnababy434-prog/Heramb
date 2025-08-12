@@ -43,7 +43,10 @@ export default function AppLayout() {
               </>
             )}
             {user?.role === 'seller' && (
-              <Link className="block hover:text-brand-yellow" to="/seller">Create Order</Link>
+              <>
+                <Link className="block hover:text-brand-yellow" to="/seller">Create Order</Link>
+                <Link className="block hover:text-brand-yellow" to="/seller/orders">Previous Orders</Link>
+              </>
             )}
             {user?.role === 'manager' && (
               <>
@@ -66,6 +69,7 @@ export default function AppLayout() {
               <Link to="/coupons">Coupons</Link>
             </>)}
             {user?.role === 'seller' && <Link to="/seller">Create Order</Link>}
+            {user?.role === 'seller' && <Link to="/seller/orders">Previous Orders</Link>}
             {user?.role === 'manager' && (<>
               <Link to="/expenses">Expenses</Link>
               <Link to="/inventory">Inventory</Link>

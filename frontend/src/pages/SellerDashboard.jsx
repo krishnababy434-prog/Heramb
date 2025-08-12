@@ -14,6 +14,10 @@ export default function SellerDashboard() {
   const [from, setFrom] = useState(todayStr)
   const [to, setTo] = useState(todayStr)
 
+  // Customer info for order placement
+  const [customerName, setCustomerName] = useState('Walk-in')
+  const [customerMobile, setCustomerMobile] = useState('')
+
   const { data: recentOrders } = useQuery({
     queryKey: ['sellerOrders', from, to],
     queryFn: async () => (await api.get(`/orders?limit=50&from=${from}&to=${to}`)).data.orders,
@@ -37,7 +41,15 @@ export default function SellerDashboard() {
   })
   const submit = useMutation({
     mutationFn: async ({ customer_name, mobile }) => (await api.post('/orders/submit', { customer_name, mobile })).data,
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['draftOrder'] }); qc.invalidateQueries({ queryKey: ['orders'] }); qc.invalidateQueries({ queryKey: ['sellerOrders'] }) }
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ['draftOrder'] });
+      qc.invalidateQueries({ queryKey: ['orders'] });
+      qc.invalidateQueries({ queryKey: ['sellerOrders'] });
+      const ord = data?.order
+      if (ord) {
+        alert(`you have place an order for ${ord.customer_name} and his mobile no is ${ord.mobile || ''} and order id is ${ord.id}`)
+      }
+    }
   })
 
   const inc = (item) => updateItem.mutate({ id: item.id, quantity: item.quantity + 1 })
@@ -135,10 +147,10 @@ export default function SellerDashboard() {
             </div>
             <div className="flex items-center gap-2">
               <input className="hidden md:block border rounded p-2 bg-white text-black" placeholder="Coupon code" onKeyDown={(e)=>{ if(e.key==='Enter') applyCoupon.mutate({ code: e.currentTarget.value }) }} />
+              <input className="border rounded p-2 bg-white text-black" placeholder="Customer Name" value={customerName} onChange={(e)=>setCustomerName(e.target.value)} />
+              <input className="border rounded p-2 bg-white text-black w-40" placeholder="Mobile" value={customerMobile} onChange={(e)=>setCustomerMobile(e.target.value)} />
               <button className="px-5 py-3 rounded-full font-semibold transition transform hover:scale-105" style={{ background:'#FFD20A', color:'#111' }} onClick={()=>{
-                const name = 'Walk-in'
-                const mob = ''
-                submit.mutate({ customer_name: name, mobile: mob })
+                submit.mutate({ customer_name: customerName || 'Walk-in', mobile: customerMobile || '' })
               }}>Order Now</button>
             </div>
           </div>

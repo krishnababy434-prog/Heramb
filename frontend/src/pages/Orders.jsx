@@ -4,6 +4,7 @@ import api from '../lib/api'
 
 export default function Orders() {
   const qc = useQueryClient()
+  const user = JSON.parse(localStorage.getItem('user') || 'null')
   const { data: menus } = useQuery({ queryKey: ['menus'], queryFn: async () => (await api.get('/menus')).data.menus })
   const { data: combos } = useQuery({ queryKey: ['combos'], queryFn: async () => (await api.get('/combos')).data.combos })
   const { data: orders } = useQuery({ queryKey: ['orders'], queryFn: async () => (await api.get('/orders?limit=20')).data.orders })
@@ -26,9 +27,19 @@ export default function Orders() {
     onSuccess: () => { setItems([]); qc.invalidateQueries({ queryKey: ['orders'] }) }
   })
 
+  const editOrder = useMutation({
+    mutationFn: async ({ id, customer_name, mobile }) => (await api.patch(`/orders/${id}`, { customer_name, mobile })).data,
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['orders'] }) }
+  })
+  const deleteOrder = useMutation({
+    mutationFn: async ({ id }) => (await api.delete(`/orders/${id}`)).data,
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['orders'] }) }
+  })
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-semibold">Orders / Billing</h2>
+      {user?.role !== 'admin' && (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white p-4 rounded shadow space-y-3">
           <div className="flex gap-2">
@@ -71,10 +82,29 @@ export default function Orders() {
           <button onClick={()=>create.mutate()} className="bg-green-600 text-white px-4 py-2 rounded">Create Order</button>
         </div>
       </div>
+      )}
       <div>
         <h3 className="font-semibold mb-2">Recent Orders</h3>
         <ul className="text-sm bg-white rounded shadow divide-y">
-          {orders?.map(o => <li key={o.id} className="p-2">#{o.id} — {o.customer_name} — ₹ {o.total}</li>)}
+          {orders?.map(o => (
+            <li key={o.id} className="p-2 flex items-center justify-between">
+              <div>#{o.id} — {o.customer_name} — ₹ {o.total}</div>
+              {user?.role === 'admin' && (
+                <div className="flex items-center gap-2">
+                  <button className="text-blue-600" onClick={()=>{
+                    const name = prompt('Customer name', o.customer_name)
+                    if (name === null) return
+                    const mob = prompt('Mobile', o.mobile || '')
+                    if (mob === null) return
+                    editOrder.mutate({ id: o.id, customer_name: name, mobile: mob })
+                  }}>Edit</button>
+                  <button className="text-red-600" onClick={()=>{
+                    if (confirm('Delete this order?')) deleteOrder.mutate({ id: o.id })
+                  }}>Delete</button>
+                </div>
+              )}
+            </li>
+          ))}
         </ul>
       </div>
     </div>
