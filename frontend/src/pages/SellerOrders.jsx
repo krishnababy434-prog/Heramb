@@ -26,11 +26,13 @@ export default function SellerOrders() {
 
   const editOrder = useMutation({
     mutationFn: async ({ id, customer_name, mobile }) => (await api.patch(`/orders/${id}`, { customer_name, mobile })).data,
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['sellerOrdersAll'] }) }
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['sellerOrdersAll'] }) },
+    onError: (err) => { alert(err?.response?.data?.message || 'Failed to edit order') }
   })
   const deleteOrder = useMutation({
     mutationFn: async ({ id }) => (await api.delete(`/orders/${id}`)).data,
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['sellerOrdersAll'] }) }
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['sellerOrdersAll'] }) },
+    onError: (err) => { alert(err?.response?.data?.message || 'Failed to delete order') }
   })
 
   const [viewOrder, setViewOrder] = useState(null)
@@ -84,7 +86,7 @@ export default function SellerOrders() {
 
       {viewOrder && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={()=>setViewOrder(null)}>
-          <div className="bg-white rounded-lg p-4 w-full max-w-md" onClick={(e)=>e.stopPropagation()}>
+          <div className="bg-white rounded-lg p-4 w/full max-w-md" onClick={(e)=>e.stopPropagation()}>
             <div className="font-semibold mb-2">Order #{viewOrder.id}</div>
             <div className="text-sm mb-2">{viewOrder.customer_name} — {viewOrder.mobile || 'No mobile'}</div>
             <div className="text-sm mb-2">Placed at {new Date(viewOrder.created_at).toLocaleString()}</div>
